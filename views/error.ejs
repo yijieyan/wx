@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <link rel='stylesheet' href='/stylesheets/style.css'/>
+</head>
+<body>
+
+<script src="https://cdn.bootcss.com/jquery/3.3.1/jquery.min.js"></script>
+<script src="http://res.wx.qq.com/open/js/jweixin-1.2.0.js"></script>
+<script type="text/javascript">
+
+
+
+
+
+    function ajax(url, type = 'get', data = {targetUrl: encodeURIComponent(url)}) {
+        return new Promise(function (resolve, reject) {
+            $.ajax({
+                url: url,
+                type: type,
+                data: data,
+                dataType: 'json',
+                success: function (data) {
+                    resolve(data);
+                },
+                error: function (err) {
+                    reject(err);
+                }
+            })
+        })
+    }
+
+
+
+
+    let url = location.href.split('#')[0];
+
+    ajax(url)
+        .then(function (data) {
+            wx.config({
+                debug: false,
+                appId: data.appId,
+                timestamp: data.timestamp,
+                nonceStr: data.nonceStr,
+                signature: data.signature,
+                jsApiList: ['chooseImage', 'previewImage', 'uploadImage', 'downloadImage', 'startRecord', 'stopRecord', 'uploadVoice', 'translateVoice', 'scanQRCode', 'onMenuShareTimeline', 'onMenuShareAppMessage', 'onMenuShareQQ', 'onMenuShareQZone']
+            });
+
+            wx.ready(function () {
+                console.log('successful!');
+                wx.checkJsApi({
+                    jsApiList: ['chooseImage', 'previewImage', 'uploadImage', 'downloadImage', 'startRecord', 'stopRecord', 'uploadVoice', 'translateVoice', 'scanQRCode', 'onMenuShareTimeline', 'onMenuShareAppMessage', 'onMenuShareQQ', 'onMenuShareQZone'], // 需要检测的JS接口列表，所有JS接口列表见附录2,
+                    success: function (res) {
+
+                        var isStartRecord = false;
+                            if (!isStartRecord) {
+                                isStartRecord = true;
+                                wx.startRecord();
+                            } else {
+                                wx.stopRecord({
+                                    success: function (res) {
+                                        isStartRecord = false;
+                                        var localId = res.localId;
+                                        wx.translateVoice({
+                                            localId: localId, // 需要识别的音频的本地Id，由录音相关接口获得
+                                            isShowProgressTips: 1, // 默认为1，显示进度提示
+                                            success: function (res) {
+                                                window.alert(res.translateResult); // 语音识别的结果
+
+                                                ajax('/movie/sendData', 'get', {text: '黑客帝国'}).then(function (ret) {
+                                                    window.alert(JSON.stringify(ret))
+                                                }).catch(function (err) {
+                                                    window.alert(JSON.stringify(err));
+                                                })
+
+                                            }
+                                        });
+                                    }
+                                });
+                            }
+                    }
+                });
+            });
+
+            wx.error(function (res) {
+                window.alert('error:', res);
+            });
+
+
+        }).catch(function (err) {
+        console.log(err);
+    })
+
+
+</script>
+</body>
+</html>
